@@ -42,14 +42,15 @@ const App: React.FC = () => {
     checkKey();
   }, []);
 
-  const handleOpenKeySelector = async () => {
+  const handleInputKey = async () => {
     const aistudio = (window as any).aistudio;
     if (aistudio?.openSelectKey) {
+      // 이 함수가 실행되면 시스템의 보안 API 키 입력 창이 뜹니다.
       await aistudio.openSelectKey();
-      // 가이드라인 준수: openSelectKey 호출 후 즉시 성공으로 가정하여 진행
       setHasKey(true);
+      setConnectionStatus('idle');
     } else {
-      alert("이 환경에서는 API 키 선택 도구를 지원하지 않습니다.");
+      alert("API 키 입력 도구를 불러올 수 없습니다. 환경을 확인해주세요.");
     }
   };
 
@@ -61,87 +62,102 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen pb-20 bg-[#f8f9fa]">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-50 px-4 py-3 shadow-sm">
+    <div className="min-h-screen pb-20 bg-[#f9fafb]">
+      <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 px-6 py-4 shadow-sm">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">B</div>
-            <h1 className="font-black text-gray-800 tracking-tighter">BRAND BUILDER</h1>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-indigo-100">B</div>
+            <div>
+              <h1 className="font-black text-gray-900 leading-none tracking-tighter">BRAND BUILDER</h1>
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">AI Content Engine</p>
+            </div>
           </div>
           <button 
             onClick={() => setIsSettingsOpen(true)}
-            className={`px-4 py-1.5 rounded-full text-xs font-black transition-all border ${
-              hasKey ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-600 animate-pulse'
+            className={`flex items-center gap-2 px-5 py-2 rounded-full text-xs font-black transition-all border-2 ${
+              hasKey 
+              ? 'bg-emerald-50 border-emerald-100 text-emerald-700' 
+              : 'bg-indigo-50 border-indigo-200 text-indigo-600 animate-bounce'
             }`}
           >
-            {hasKey ? '● API 연결됨' : '○ API 연결 필요'}
+            <span className="relative flex h-2 w-2">
+              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${hasKey ? 'bg-emerald-400' : 'bg-indigo-400'}`}></span>
+              <span className={`relative inline-flex rounded-full h-2 w-2 ${hasKey ? 'bg-emerald-500' : 'bg-indigo-600'}`}></span>
+            </span>
+            {hasKey ? '시스템 연결됨' : 'API 키 입력하기'}
           </button>
         </div>
       </header>
 
       {isSettingsOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsSettingsOpen(false)}></div>
-          <div className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl relative overflow-hidden">
-            <div className="p-8 space-y-6">
+          <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={() => setIsSettingsOpen(false)}></div>
+          <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-10 space-y-8">
               <div className="flex justify-between items-center">
-                <h2 className="text-xl font-black text-gray-900">환경 설정</h2>
-                <button onClick={() => setIsSettingsOpen(false)} className="text-gray-400 hover:text-gray-900 transition-colors">
+                <h2 className="text-2xl font-black text-gray-900 tracking-tight">API 보안 설정</h2>
+                <button onClick={() => setIsSettingsOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
 
-              <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-6 space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-black text-indigo-900 uppercase">Gemini API 키 연결</span>
-                  <div className={`w-2 h-2 rounded-full ${hasKey ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
+              <div className="bg-indigo-600 rounded-3xl p-8 text-white space-y-5 shadow-xl shadow-indigo-100">
+                <div className="flex justify-between items-start">
+                  <div className="bg-white/20 p-3 rounded-2xl">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
+                  </div>
+                  <span className={`px-3 py-1 rounded-full text-[10px] font-black border border-white/30 ${hasKey ? 'bg-emerald-500/30' : 'bg-amber-500/30'}`}>
+                    {hasKey ? 'CONNECTED' : 'REQUIRED'}
+                  </span>
                 </div>
-                <p className="text-xs text-indigo-700 leading-relaxed">
-                  브랜드 콘텐츠 엔진을 사용하려면 Google AI Studio에서 발급받은 API 키가 필요합니다.
-                  유료 플랜이 활성화된 프로젝트의 키를 선택해주세요.
-                </p>
-                <div className="pt-2">
-                  <button
-                    onClick={handleOpenKeySelector}
-                    className="w-full py-3 bg-indigo-600 text-white rounded-xl text-sm font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
-                  >
-                    API 키 선택하기
-                  </button>
+                <div>
+                  <h3 className="text-lg font-black mb-2">Gemini API 키 입력</h3>
+                  <p className="text-xs text-indigo-100 leading-relaxed font-medium">
+                    콘텐츠 생성을 위해 본인의 API 키를 입력해야 합니다.<br/>
+                    아래 버튼을 누르면 나타나는 시스템 창에 키를 복사해서 넣어주세요.
+                  </p>
                 </div>
-                <div className="pt-1 text-center">
-                  <a 
-                    href="https://ai.google.dev/gemini-api/docs/billing" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-[10px] text-indigo-400 hover:underline font-bold"
-                  >
-                    결제 및 한도 안내 확인하기
-                  </a>
-                </div>
+                <button
+                  onClick={handleInputKey}
+                  className="w-full py-4 bg-white text-indigo-600 rounded-2xl text-sm font-black hover:bg-indigo-50 transition-all shadow-lg active:scale-95"
+                >
+                  지금 API 키 입력 및 연결
+                </button>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <button
                   onClick={handleTest}
                   disabled={connectionStatus === 'testing'}
-                  className="w-full py-3 border-2 border-gray-100 text-gray-600 rounded-xl text-sm font-black hover:bg-gray-50 transition-all disabled:opacity-50"
+                  className="w-full py-4 border-2 border-gray-100 text-gray-500 rounded-2xl text-sm font-black hover:bg-gray-50 transition-all disabled:opacity-50"
                 >
-                  {connectionStatus === 'testing' ? '연결 확인 중...' : '연결 테스트하기'}
+                  {connectionStatus === 'testing' ? '연결 상태 확인 중...' : '연결 상태 테스트'}
                 </button>
-                {connectionStatus === 'success' && <p className="text-center text-[10px] text-emerald-600 font-bold">✓ 연결에 성공했습니다!</p>}
-                {connectionStatus === 'error' && <p className="text-center text-[10px] text-red-500 font-bold">✗ 연결에 실패했습니다. 키를 다시 확인해주세요.</p>}
+                {connectionStatus === 'success' && <p className="text-center text-xs text-emerald-600 font-black animate-bounce">✨ API가 성공적으로 연결되었습니다!</p>}
+                {connectionStatus === 'error' && <p className="text-center text-xs text-red-500 font-black">❌ 연결에 실패했습니다. 키를 다시 입력해주세요.</p>}
+              </div>
+
+              <div className="text-center">
+                <a 
+                  href="https://ai.google.dev/gemini-api/docs/billing" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-[11px] text-gray-400 hover:text-indigo-600 font-bold underline underline-offset-4"
+                >
+                  구글 AI 스튜디오 결제 및 한도 안내 확인
+                </a>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      <main className="max-w-6xl mx-auto px-4 mt-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1 space-y-8">
+      <main className="max-w-6xl mx-auto px-6 mt-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          <div className="lg:col-span-4 space-y-10">
             <KnowledgeBase 
               items={knowledge} 
-              onAdd={(item) => setKnowledge([...knowledge, item])} 
+              onAdd={(item) => setKnowledge([item, ...knowledge])} 
               onRemove={(id) => setKnowledge(knowledge.filter(k => k.id !== id))} 
             />
             <DailyContextForm 
@@ -149,7 +165,7 @@ const App: React.FC = () => {
               onChange={setContext} 
             />
           </div>
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-8">
             <ContentGenerator 
               knowledge={knowledge} 
               context={context} 
@@ -164,5 +180,4 @@ const App: React.FC = () => {
   );
 };
 
-// index.tsx의 default export 에러 수정을 위해 명시적으로 export default 추가
 export default App;
