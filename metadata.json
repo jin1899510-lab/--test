@@ -1,0 +1,7 @@
+{
+  "name": "인스타크리에이터 AI 시스템",
+  "description": "유튜브 링크, PDF, 텍스트를 7-2-1 전략과 AIDA 후킹 방법론을 활용한 고효율 인스타그램 피드 및 카드뉴스로 변환하는 도구입니다.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
