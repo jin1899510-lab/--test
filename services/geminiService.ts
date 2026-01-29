@@ -10,76 +10,42 @@ export const generateInstaContent = async (
   format: PostFormat,
   mood: BrandMood
 ): Promise<GeneratedPost> => {
+  // 매 요청 시 새로운 인스턴스를 생성하여 최신 세션 키를 반영하여 레이스 컨디션 방지
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const knowledgeContext = knowledge.map(k => `[참조 데이터: ${k.title}]\n${k.content}`).join('\n\n');
   
   const moodStyleGuide = {
-    [BrandMood.PROFESSIONAL]: `
-      - 핵심 페르소나: 냉철하고 논리적인 업계 전문가.
-      - 문체 특징: 군더더기 없는 간결한 문장, 수치와 데이터 중심의 서술, 격식체(~입니다, ~하십시오) 사용.
-      - 특징: 전문 용어를 적재적소에 배치하여 신뢰감을 주고, 결론부터 말하는 두괄식 구조를 가짐.
-      - 예시: "이 방법의 핵심은 세 가지입니다. 첫째, 데이터 분석. 둘째, 타겟팅 최적화..."`,
-    [BrandMood.FRIENDLY]: `
-      - 핵심 페르소나: 따뜻하고 상냥하며 소통을 즐기는 이웃집 대표님.
-      - 문체 특징: 상냥한 구어체(~해요, ~인가요?), 독자의 의견을 묻는 질문형 문장, 풍부한 이모지와 부드러운 단어 선택.
-      - 특징: 진입장벽을 낮추고 독자와 수평적인 관계에서 대화하듯 서술함.
-      - 예시: "여러분, 오늘 하루는 어떠셨어요? 저는 오늘 이런 재미있는 생각을 해봤는데요~"`,
-    [BrandMood.EMOTIONAL]: `
-      - 핵심 페르소나: 브랜드의 철학과 깊은 영감을 전하는 아티스트/작가형 오너.
-      - 문체 특징: 비유와 은유를 활용한 서사적 표현, 시적인 리듬감, '마음', '결', '온도', '잔상' 등의 감성적 어휘 사용.
-      - 특징: 정보 전달보다는 가치와 무드를 전달하며, 독자의 내면과 공명하는 서정적인 흐름.
-      - 예시: "마치 새벽 공기처럼 차분히 스며드는 브랜드의 온기를, 당신의 일상 한 켠에 남기고 싶습니다."`,
-    [BrandMood.ENERGETIC]: `
-      - 핵심 페르소나: 도전을 즐기고 성장을 독려하는 열정적인 동기부여 리더.
-      - 문체 특징: 짧고 강렬한 단문, 느낌표(!)의 적극적 활용, 행동을 촉구하는 파워풀한 동사 사용.
-      - 특징: 속도감 있는 전개로 독자의 실행력을 자극하고 성취감을 강조함.
-      - 예시: "지금 당장 움직이세요! 결과는 고민하는 시간이 아니라 행동하는 순간에 결정됩니다. 함께 갑시다!"`
+    [BrandMood.PROFESSIONAL]: "냉철하고 논리적인 전문가 문체. 수치와 데이터 중심, 격식체 사용.",
+    [BrandMood.FRIENDLY]: "따뜻하고 상냥한 이웃집 대표님 문체. 질문형 문장과 이모지 활용.",
+    [BrandMood.EMOTIONAL]: "비유와 은유를 활용한 서사적 표현. 시적인 리듬감과 감성 어휘 사용.",
+    [BrandMood.ENERGETIC]: "짧고 강렬한 단문, 느낌표와 행동 촉구형 동사 사용."
   };
 
   const prompt = `
-    당신은 이 브랜드를 운영하는 **대표(1인칭 시점)**입니다. 
-    당신의 브랜드 피드를 방문한 고객들에게 직접 이야기하세요.
-
-    [선택된 브랜드 무드 가이드: ${mood}]
-    ${moodStyleGuide[mood]}
-
-    [절대 규칙: 좋은 내용 완벽 공식]
-    모든 콘텐츠는 반드시 아래 5단계 구조를 순서대로 따라야 합니다:
-    1. **Hook (후킹)**: 0.5초 만에 시선을 끄는 강력한 첫 문장 (스타일 가이드에 최적화된 헤드라인).
-    2. **Empathy (공감)**: 대표인 내가 겪었던 고민이나 고객이 현재 느끼는 고충에 대해 깊게 공감하기.
-    3. **Value (가치)**: 참조 데이터를 바탕으로 내가 제공하는 구체적인 해결책과 통찰.
-    4. **Story (이야기)**: 오늘의 맥락(${context.story || '일상'})을 섞어 대표인 나의 인간미와 진정성 보여주기.
-    5. **CTA (행동 유도)**: "저를 팔로우하고 함께 성장해요" 등 브랜드다운 명확한 마무리.
-
-    [작성 세부 지침]
-    - 반드시 1인칭("나", "저", "우리")을 사용하여 대표의 시점에서 작성할 것.
-    - 선택된 무드에 맞춰 문장의 길이, 어조, 이모지 사용량을 엄격하게 차별화할 것.
-    - 입력된 데이터(유튜브, PDF 등)가 제3자의 글이라도 "제가 이 내용을 보고 느낀 점은", "저희 브랜드의 철학은"과 같이 재해석할 것.
-
-    [시스템 전략]
-    ${SYSTEM_STRATEGY}
+    당신은 브랜드 대표입니다. 1인칭 시점으로 작성하세요.
+    브랜드 무드: ${mood} (${moodStyleGuide[mood]})
+    전략: ${strategy}
     
+    [구성]
+    1. Hook (후킹 문구)
+    2. Empathy (공감)
+    3. Value (참조 데이터 기반 가치)
+    4. Story (오늘의 맥락: ${context.story})
+    5. CTA (행동 유도)
+
     [참조 데이터]
     ${knowledgeContext}
 
-    [JSON 출력 구조]
-    {
-      "title": "대표의 진심이 담긴 피드 주제",
-      "slides": ["카드뉴스 각 슬라이드 문구 (스타일 반영)"],
-      "caption": "완벽 공식과 무드를 100% 반영한 1인칭 본문 캡션",
-      "hashtags": ["#브랜드명", "#대표스타그램", "#카테고리"],
-      "strategyType": "${strategy}",
-      "brandMood": "${mood}"
-    }
+    반드시 지정된 JSON 형식으로만 응답하세요.
   `;
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-pro-preview',
       contents: prompt,
       config: {
-        temperature: 0.9,
+        temperature: 0.8,
         responseMimeType: 'application/json',
         responseSchema: {
           type: Type.OBJECT,
@@ -96,27 +62,35 @@ export const generateInstaContent = async (
       }
     });
 
-    const jsonStr = response.text?.trim() || '{}';
-    return JSON.parse(jsonStr) as GeneratedPost;
+    const text = response.text;
+    if (!text) throw new Error("API 응답이 비어있습니다.");
+    return JSON.parse(text) as GeneratedPost;
   } catch (error: any) {
-    if (error?.message?.includes("Requested entity was not found")) {
+    console.error("API 오류:", error);
+    // 가이드라인에 따라 특정 오류 발생 시 키 선택 대화상자를 유도하기 위한 에러 메시지 반환
+    if (error?.message?.includes("401") || error?.message?.includes("API key") || error?.message?.includes("Requested entity was not found.")) {
       throw new Error("API_KEY_ERROR");
     }
-    throw new Error("콘텐츠 생성 실패");
+    throw new Error("콘텐츠 생성 중 오류가 발생했습니다.");
   }
 };
 
 export const testConnection = async (): Promise<boolean> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   try {
+    // API 호출 직전에 인스턴스를 생성하여 최신 키 사용 보장
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const result = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: 'ping',
-      config: { maxOutputTokens: 5 }
+      contents: 'hi',
+      config: { 
+        maxOutputTokens: 5,
+        // maxOutputTokens 설정 시 thinkingBudget을 함께 설정하여 응답이 차단되지 않도록 함
+        thinkingConfig: { thinkingBudget: 0 }
+      }
     });
     return !!result.text;
-  } catch (error) {
-    console.error("연결 테스트 실패:", error);
+  } catch (error: any) {
+    console.error("Test connection error:", error);
     return false;
   }
 };
